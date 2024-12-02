@@ -3,9 +3,9 @@ import subprocess
 def run_instance(start_index, end_index):
     subprocess.Popen(['python', 'your_script.py', '--start', str(start_index), '--end', str(end_index)])
 
-total_cpgs = 263497  # 263497 Total number of CpG sites
-batch_size = 1000  # Number of CpGs per batch
-parallel_processes = 15  # Number of instances to run in parallel
+total_cpgs = 15736  # 263497 Total number of CpG sites
+batch_size = 500  # Number of CpGs per batch
+parallel_processes = 16  # Number of instances to run in parallel
 
 
 # Generate batches
@@ -20,7 +20,7 @@ for i in range(0, len(batches), parallel_processes):
         if i + j < len(batches):
             start_index, end_index = batches[i + j]
             print(f"Starting process for CpGs {start_index} to {end_index}")
-            p = subprocess.Popen(['python', 'Model.py', '--start', str(start_index), '--end', str(end_index)])
+            p = subprocess.Popen(['python', 'Immunotherapy.Model.py', '--start', str(start_index), '--end', str(end_index)])
             processes.append(p)
     # Wait for all processes to finish
     for p in processes:

@@ -1,9 +1,9 @@
 import subprocess
 
 def run_instance(start_index, end_index):
-    subprocess.Popen(['python', 'your_script.py', '--start', str(start_index), '--end', str(end_index)])
+    subprocess.Popen(['your_script.py', '--start', str(start_index), '--end', str(end_index)])
 
-total_cpgs = 263497  # 263497 Total number of CpG sites
+total_cpgs = 299828  # 263497 Total number of CpG sites
 batch_size = 1000  # Number of CpGs per batch
 parallel_processes = 15  # Number of instances to run in parallel
 

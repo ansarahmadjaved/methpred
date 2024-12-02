@@ -20,7 +20,7 @@ for i in range(0, len(batches), parallel_processes):
         if i + j < len(batches):
             start_index, end_index = batches[i + j]
             print(f"Starting process for CpGs {start_index} to {end_index}")
-            p = subprocess.Popen(['python', 'Model.py', '--start', str(start_index), '--end', str(end_index)])
+            p = subprocess.Popen(['python', 'GtexModel.py', '--start', str(start_index), '--end', str(end_index)])
             processes.append(p)
     # Wait for all processes to finish
     for p in processes:

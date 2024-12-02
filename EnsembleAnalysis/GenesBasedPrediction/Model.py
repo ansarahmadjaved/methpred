@@ -1,7 +1,7 @@
 import pandas as pd
 from scipy import stats
 from scipy.spatial import distance
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import warnings
@@ -15,6 +15,7 @@ from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegresso
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import root_mean_squared_error, mean_absolute_error, r2_score, median_absolute_error, mean_squared_error
 
+import os
 import argparse
 
 parser = argparse.ArgumentParser(description='Process CpG sites.')
@@ -29,9 +30,6 @@ print(fromCpgs,'-', toCpgs)
 
 TPMscaler = StandardScaler()
 Methscaler = StandardScaler()
-
-ProteinCodCpgsAnnotations = pd.read_csv('ProteinCodCpgsAnnotations.csv')
-ProteinCodCpgsAnnotations = ProteinCodCpgsAnnotations.set_index('probeID')
 
 print("Reading Tpm Data")
 TrainMeth = pd.read_pickle('TrainMeth.pkl')
@@ -63,9 +61,9 @@ models.append(('Ridge', Ridge()))
 models.append(('Lasso', Lasso()))
 models.append(('ElasticNet', ElasticNet()))
 
-# Tree-based Models
+# # Tree-based Models
 models.append(('DecisionTree', DecisionTreeRegressor()))
-models.append(('RandomForest 2', RandomForestRegressor(n_estimators=2, n_jobs=15)))
+models.append(('RandomForest ', RandomForestRegressor(n_estimators=2, n_jobs=10)))
 models.append(('GradientBoosting', GradientBoostingRegressor()))
 
 # Support Vector Regressor
@@ -77,31 +75,28 @@ def warn(*args, **kwargs):
 import warnings
 warnings.warn = warn
 ResultList = []
-
+try: os.mkdir('Results')
+except:pass
 i = fromCpgs
-for SelectedCpg in list(CpgsGeneDict.keys())[fromCpgs:toCpgs]:   
+for SelectedCpg in list(CpgsGeneDict.items())[fromCpgs:toCpgs]:
     for model in models:        
         Model = model[1]
-        SelectedTranscripts = len(ProteinCodCpgsAnnotations.loc[SelectedCpg][['transcriptIDs']])
-        if SelectedTranscripts == 1:
-            SelectedTranscripts = list(ProteinCodCpgsAnnotations.loc[SelectedCpg][['transcriptIDs']].values)
-        else:
-            SelectedTranscripts = ProteinCodCpgsAnnotations.loc[SelectedCpg]['transcriptIDs'].values
-        Model.fit(TPMscaler.fit_transform(TrainTpm[SelectedTranscripts].fillna(0)), TrainMeth[SelectedCpg].fillna(0))  
-        predictedMeth = Model.predict(TPMscaler.transform(ValTpm[SelectedTranscripts].fillna(0))) 
-        resultDict = {'CPG':SelectedCpg, "PearsonR":stats.pearsonr(predictedMeth,ValMeth[SelectedCpg].fillna(0))[0], 
-                    "Euclidean Distance" : distance.euclidean(predictedMeth,ValMeth[SelectedCpg].fillna(0)), 
-                    'RMSE': root_mean_squared_error(predictedMeth,ValMeth[SelectedCpg].fillna(0)),
-                    'MSE': mean_squared_error(predictedMeth,ValMeth[SelectedCpg].fillna(0)),
-                    "MAE": mean_absolute_error(predictedMeth,ValMeth[SelectedCpg].fillna(0)),
-                    "R2" : r2_score(predictedMeth,ValMeth[SelectedCpg].fillna(0)), 
-                    'P.Val' : stats.pearsonr(predictedMeth,ValMeth[SelectedCpg].fillna(0))[1], 
-                    'Model':model[0], 
-                    
-                    }
+        Cpg = SelectedCpg[0]
+        Genes = SelectedCpg[1]
+        Model.fit(TPMscaler.fit_transform(TrainTpm[Genes].fillna(0)), TrainMeth[Cpg].fillna(0))  
+        predictedMeth = Model.predict(TPMscaler.transform(ValTpm[Genes].fillna(0))) 
+        resultDict = {'CPG':Cpg, "PearsonR":stats.pearsonr(predictedMeth,ValMeth[Cpg].fillna(0))[0], 
+        "Euclidean Distance" : distance.euclidean(predictedMeth,ValMeth[Cpg].fillna(0)), 
+        'MSE': mean_squared_error(predictedMeth,ValMeth[Cpg].fillna(0)),
+        "MAE": mean_absolute_error(predictedMeth,ValMeth[Cpg].fillna(0)),
+        "R2" : r2_score(predictedMeth,ValMeth[Cpg].fillna(0)), 
+        'P.Val' : stats.pearsonr(predictedMeth,ValMeth[Cpg].fillna(0))[1], 
+        'Model':model[0], "Genes":Genes, 
+        }
         ResultList.append(resultDict)
         pd.DataFrame(ResultList).to_csv(f'Results/EnsembleModel.{fromCpgs}.to.{toCpgs}.csv')
-
     if i % 100 == 0:    
         print(i ,"Out of " ,toCpgs)
     i += 1    
+
+        
